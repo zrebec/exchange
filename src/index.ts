@@ -121,6 +121,16 @@ const setDataToCache = async (date: string, currency: string, data: any): Promis
   return false
 }
 
+app.get('/api/rates', (req: Request, res: Response) => {
+  return res.status(400).json({
+    message: `Date and currency is missing. The url should looks like /api/rates/:currency/:date where :date will be your desired date like YYYY-MM-DD and :currency should be USD for example`,
+  })
+})
+
+app.get('/api/rates/:currency', (req: Request, res: Response) => {
+  return res.status(400).json({ message: `Date is missing. Please, enter a valid date to URL in format YYYY-MM-DD` })
+})
+
 app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
   // Vstupne parametre si dame do samostatnych premennych
   const date: string = req.params.date as string
