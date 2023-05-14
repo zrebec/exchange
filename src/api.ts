@@ -1,10 +1,12 @@
 import { Sequelize, Model, DataTypes } from 'sequelize'
 
 // Vytvorime si lokalnu cache a sql db
-const cache: { [date: string]: { [currency: string]: any } } = {}
+const cache: CacheItem[] = []
+const MAX_CACHE_SIZE = 1000
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './currencies.db',
+  logging: false,
 })
 
 // Vytvorenie tabuľky
@@ -36,13 +38,21 @@ sequelize.sync().then(() => {
   console.log(`Database & tables created!`)
 })
 
+interface CacheItem {
+  date: string
+  currency: string
+  data: any
+}
+
 const getDataFromCache = (date: string, currency: string): any => {
   // Overime ci mame pre tento datum a pre tuto menu uz nieco v lokalnej cache
-  if (cache[date] && cache[date][currency]) {
+  const cacheItem = cache.find((item) => item.date === date && item.currency === currency)
+  if (cacheItem) {
     // Nasli sme prislusny datum aj prislusnu currency a tak mozeme odovzdat parameter z lokalnej cache
     console.log(`We're returning from local cache there is already exists`)
-    return cache[date][currency]
+    return cacheItem.data
   }
+
   // Nasledne overime ci existuje zaznam v sqlite3
   Currency.findOne({
     where: {
@@ -64,36 +74,40 @@ const getDataFromCache = (date: string, currency: string): any => {
 }
 
 const setDataToCache = async (date: string, currency: string, data: any): Promise<boolean> => {
-  if (!cache[date]) {
-    // Ak nemame prislusny datum, vytvorime si prazdny objekt pre dany datum
-    cache[date] = {}
+  const existingItemIndex = cache.findIndex((item) => item.date === date && item.currency === currency)
+  if (existingItemIndex !== -1) {
+    // aktualizujeme data ak bol nájený
+    cache[existingItemIndex].data = data
+  } else {
+    // add the new item
+    if (cache.length === MAX_CACHE_SIZE) {
+      // remove the oldest item if the cache is full
+      console.log('Remove oldest from local cache')
+      cache.shift()
+    }
+    console.log('Stored into local cache')
+    cache.push({ date, currency, data })
   }
-  // Uz vieme, ze nezlyhame do exception pri neexistujucom datume a tak mozeme overit aj dvojrozmerne pole
-  if (!cache[date][currency]) {
-    // Tento datum a tuto menu este nemame v lokalnej cache a tak hodnotu ulozime
-    cache[date][currency] = data
-    console.log(`Stored into local cache`)
-    // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
-    Currency.findOne({
-      where: {
+  // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
+  Currency.findOne({
+    where: {
+      date: date,
+      currency: currency,
+    },
+  }).then((record) => {
+    if (!record) {
+      Currency.create({
         date: date,
         currency: currency,
-      },
-    }).then((record) => {
-      if (!record) {
-        Currency.create({
-          date: date,
-          currency: currency,
-          data: data,
+        data: data,
+      })
+        .then(() => {
+          console.log('Stored into database')
+          return true
         })
-          .then(() => {
-            console.log('Stored into database')
-            return true
-          })
-          .catch((error) => console.error(`Error inserting data: ${data}. Error was ${error}`))
-      }
-    })
-  }
+        .catch((error) => console.error(`Error inserting data: ${data}. Error was ${error}`))
+    }
+  })
   return false
 }
 
