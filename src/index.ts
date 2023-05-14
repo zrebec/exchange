@@ -64,6 +64,7 @@ const getDataFromCache = (date: string, currency: string): any => {
   // Overime ci mame pre tento datum a pre tuto menu uz nieco v lokalnej cache
   if (cache[date] && cache[date][currency]) {
     // Nasli sme prislusny datum aj prislusnu currency a tak mozeme odovzdat parameter z lokalnej cache
+    console.log(`We're returning from local cache there is already exists`)
     return cache[date][currency]
   }
   // Nasledne overime ci existuje zaznam v sqlite3
@@ -95,6 +96,7 @@ const setDataToCache = async (date: string, currency: string, data: any): Promis
   if (!cache[date][currency]) {
     // Tento datum a tuto menu este nemame v lokalnej cache a tak hodnotu ulozime
     cache[date][currency] = data
+    console.log(`Stored into local cache`)
     // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
     Currency.findOne({
       where: {
@@ -109,7 +111,7 @@ const setDataToCache = async (date: string, currency: string, data: any): Promis
           data: data,
         })
           .then(() => {
-            console.log('Record inserted')
+            console.log('Stored into database')
             return true
           })
           .catch((error) => console.error(`Error inserting data: ${data}. Error was ${error}`))
