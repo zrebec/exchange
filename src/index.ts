@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express'
 import axios from 'axios'
 import dotenv from 'dotenv'
-import sqlite3 from 'sqlite3'
 import { Sequelize, Model, DataTypes } from 'sequelize'
 const _ = require('lodash')
 
