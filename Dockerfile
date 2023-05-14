@@ -1,20 +1,19 @@
-# Základný obraz
+# Base image
 FROM node:16
 
-# Nastavenie pracovného adresára v kontajneri
+# Set working directory
 WORKDIR /usr/src/app
 
-# Kopírovanie package.json a package-lock.json
+# Install app dependencies
 COPY package*.json ./
-
-# Inštalácia závislostí
 RUN npm install
 
-# Kopírovanie zdrojových súborov do kontajnera
+# Transpile TypeScript to JavaScript
 COPY . .
+RUN npm run build
 
-# Exponovanie portu 3000
+# Expose port
 EXPOSE 3000
 
-# Spustenie aplikácie
-CMD [ "node", "index.js" ]
+# Start app
+CMD [ "npm", "start" ]
