@@ -18,6 +18,7 @@
     "lodash": "^4.17.21",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.8",
+    "sequelize": "^6.31.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },

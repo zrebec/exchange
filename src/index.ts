@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express'
 import axios from 'axios'
 import dotenv from 'dotenv'
 import sqlite3 from 'sqlite3'
-import { isUint8ClampedArray } from 'util/types'
+import { Sequelize, Model, DataTypes } from 'sequelize'
 const _ = require('lodash')
 
 // TODO Implementovat sqlite3
@@ -24,19 +24,69 @@ dotenv.config()
 // zoberieme si API_KEY z .env aby to nemuselo byt na githube
 const apiKey: string = process.env.API_KEY
 
-// Vytvorime si lokalnu cache
+// Vytvorime si lokalnu cache a sql db
 const cache: { [date: string]: { [currency: string]: any } } = {}
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: './currencies.db',
+})
 
-const getDataFromLocalCache = (date: string, currency: string): any => {
+// Vytvorenie tabuľky
+class Currency extends Model {}
+Currency.init(
+  {
+    date: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    currency: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    data: {
+      type: DataTypes.JSON,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'Currency',
+    tableName: 'currency',
+  }
+)
+
+// Synchronizácia databázy a vytvorenie tabuľky 'currency'
+sequelize.sync().then(() => {
+  console.log(`Database & tables created!`)
+})
+
+const getDataFromCache = (date: string, currency: string): any => {
   // Overime ci mame pre tento datum a pre tuto menu uz nieco v lokalnej cache
   if (cache[date] && cache[date][currency]) {
     // Nasli sme prislusny datum aj prislusnu currency a tak mozeme odovzdat parameter z lokalnej cache
     return cache[date][currency]
   }
+  // Nasledne overime ci existuje zaznam v sqlite3
+  Currency.findOne({
+    where: {
+      date: date,
+      currency: currency,
+    },
+  })
+    .then((record) => {
+      if (record) {
+        console.log(`We're returning from database because there is already exists in database`)
+        return record.dataValues.data
+      }
+    })
+    .catch((error) => {
+      console.log(`Cannot find data. Error message: ${error}`)
+    })
+
   return null
 }
 
-const setDataToLocalCache = (date: string, currency: string, data: any): boolean => {
+const setDataToCache = async (date: string, currency: string, data: any): Promise<boolean> => {
   if (!cache[date]) {
     // Ak nemame prislusny datum, vytvorime si prazdny objekt pre dany datum
     cache[date] = {}
@@ -45,13 +95,31 @@ const setDataToLocalCache = (date: string, currency: string, data: any): boolean
   if (!cache[date][currency]) {
     // Tento datum a tuto menu este nemame v lokalnej cache a tak hodnotu ulozime
     cache[date][currency] = data
-    return true
+    // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
+    Currency.findOne({
+      where: {
+        date: date,
+        currency: currency,
+      },
+    }).then((record) => {
+      if (!record) {
+        Currency.create({
+          date: date,
+          currency: currency,
+          data: data,
+        })
+          .then(() => {
+            console.log('Record inserted')
+            return true
+          })
+          .catch((error) => console.error(`Error inserting data: ${data}. Error was ${error}`))
+      }
+    })
   }
   return false
 }
 
 app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
-  console.log('AAA')
   // Vstupne parametre si dame do samostatnych premennych
   const date: string = req.params.date as string
   const currency: string = req.params.currency as string
@@ -61,7 +129,7 @@ app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
   }
 
   // Najskor sa pozrieme do lokalnej cache ci mame pre takuto menu a datum uz historicku odpoved
-  const localData = getDataFromLocalCache(date, currency)
+  const localData = getDataFromCache(date, currency)
   // Ak mame historicku hodnotu pre konkretny datum a menu, teda localData nie je false
   // vratime to z navratovej hodnotz funkcie getDataFromLocalCache pretoze uz nebude null
   // return pouzivam preto, aby som co najskor vratil odpoved a nepokracoval dalej
@@ -77,7 +145,7 @@ app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
   try {
     const response = await axios.get(`https://v6.exchangerate-api.com/v6/${apiKey}/history/${currency}/${year}/${month}/${day}`)
     // Ak sa vsetko podari a mame response.data, ziskane json ulozime do local cache
-    setDataToLocalCache(date, currency, response.data)
+    setDataToCache(date, currency, response.data)
     res.json(response.data)
   } catch (error) {
     if (_.isNil(error.request))
