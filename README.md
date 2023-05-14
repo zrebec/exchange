@@ -1,6 +1,6 @@
 # Currency API
 
-This is a simple API that allows you to get exchange rates for a particular currency on a specific date. It uses Express, SQLite, and Axios to fetch data from the [https://v6.exchangerate-api.com/] API. It also caches data in local memory and SQLite database to reduce redundant API calls.
+This is a simple API that allows you to get exchange rates for a particular currency on a specific date. It uses Express, SQLite, and Axios to fetch data from the [exchange API][1]. It also caches data in local memory and SQLite database to reduce redundant API calls.
 
 ## Features
 
@@ -10,36 +10,44 @@ This is a simple API that allows you to get exchange rates for a particular curr
 - Error handling for invalid requests and server errors
 - API Endpoint
 - GET localhost:3000/api/rates/:currency/:date
-- Replace :currency with the desired currency (e.g., 'USD') and :date with the date in the format 'YYYY-MM-DD' (e.g., '2023-12-01').
+- Replace :currency with the desired currency (e.g., **'USD'**) and :date with the date in the format 'YYYY-MM-DD' (e.g., **'2023-12-01'**).
 
 ## Installation
+
 To run this project, you need to have Docker installed on your system. If you don't have Docker installed, you can download it from here.
 
 ## Build Docker Image
+
 Navigate to the project directory and run the following command to build the Docker image:
 
 ### Build container
+
 ```bash
 docker build -t currency-api .
 ```
 
 ### Run the container
+
 After the image has been built successfully, you can run the Docker container using the following command:
 
 ```bash
 docker run -p 3000:3000 currency-api
 ```
-Now, the API should be accessible at http://localhost:3000.
+
+Now, the API should be accessible at [http://localhost:3000][2].
 
 ## Environment Variables
+
 The project uses a .env file for the API key. The .env file should be located at the root of your project and should contain the following:
 
 ```makefile
 API_KEY=your_api_key
 ```
-Replace your_api_key with your actual API key from the https://v6.exchangerate-api.com/.
+
+Replace your_api_key with your actual API key from the [Exchange API][1]
 
 ## Error Handling
+
 The API has error handling for various scenarios, including:
 
 - Missing or incorrect date or currency parameters
@@ -48,6 +56,9 @@ The API has error handling for various scenarios, including:
 - Server errors
 - No response received from the server
 
-
 ## Contribution
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+[1]: https://www.exchangerate-api.com/
+[2]: http://localhost:3000
