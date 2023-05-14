@@ -12,6 +12,24 @@ This is a simple API that allows you to get exchange rates for a particular curr
 - GET localhost:3000/api/rates/:currency/:date
 - Replace :currency with the desired currency (e.g., **'USD'**) and :date with the date in the format 'YYYY-MM-DD' (e.g., **'2023-12-01'**).
 
+### Logic of fethcing and storing data
+
+The logic of fetching and storing data is in file `api.ts`.
+
+1. Look if we have table currency in our database. If not, we're create it.
+2. If exists, we're trying to fetch data from desired date and currency from local cache.
+3. If not exists in local cachce, we're trying to fetch data from databse if already exists
+4. If not in local cache or in database we are goingo to API for fetch
+   data and and store it into local cache at first and then into datase.
+5. If sever is restarted but we don't delete database, we cannot find
+   desired currency and date in local cache of course but we can still get
+   it from database.
+6. If server is restarted and database was deleted, so we're going to
+   step 1.
+
+### Potential problem
+The problem can be if we will storing into local 
+
 ## Installation
 
 To run this project, you need to have Docker installed on your system. If you don't have Docker installed, you can download it from here.
