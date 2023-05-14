@@ -27,9 +27,6 @@ The logic of fetching and storing data is in file `api.ts`.
 6. If server is restarted and database was deleted, so we're going to
    step 1.
 
-### Potential problem
-The problem can be if we will storing into local 
-
 ## Installation
 
 To run this project, you need to have Docker installed on your system. If you don't have Docker installed, you can download it from here.
