@@ -59,7 +59,7 @@ app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
   try {
     const response = await axios.get(`https://v6.exchangerate-api.com/v6/${apiKey}/history/${currency}/${year}/${month}/${day}`)
     // Ak sa vsetko podari a mame response.data, ziskane json ulozime do local cache
-    setDataToCache(date, currency, response.data)
+    await setDataToCache(date, currency, response.data)
     res.json(response.data)
   } catch (error) {
     if (_.isNil(error.request))

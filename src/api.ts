@@ -76,18 +76,15 @@ const getDataFromCache = (date: string, currency: string): any => {
 
 const setDataToCache = async (date: string, currency: string, data: any): Promise<boolean> => {
   const existingItemIndex = cache.findIndex((item) => item.date === date && item.currency === currency)
-  if (existingItemIndex !== -1) {
-    // aktualizujeme data ak bol nájený
-    cache[existingItemIndex].data = data
-  } else {
-    // add the new item
+  if (existingItemIndex === -1) {
     if (cache.length === MAX_CACHE_SIZE) {
-      // remove the oldest item if the cache is full
+      // odstranime najstarsi zazsnam v local cache
       console.log('Remove oldest from local cache')
       cache.shift()
+      // ulozime data do lokalneho cache
+      console.log('Stored into local cache')
+      cache.push({ date, currency, data })
     }
-    console.log('Stored into local cache')
-    cache.push({ date, currency, data })
   }
   // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
   return saveToDB(date, currency, data)
