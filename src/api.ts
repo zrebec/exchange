@@ -1,4 +1,5 @@
 import { Sequelize, Model, DataTypes } from 'sequelize'
+import { Json } from 'sequelize/types/utils'
 
 // Vytvorime si lokalnu cache a sql db
 const cache: CacheItem[] = []
@@ -89,25 +90,22 @@ const setDataToCache = async (date: string, currency: string, data: any): Promis
     cache.push({ date, currency, data })
   }
   // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
-  Currency.findOne({
-    where: {
-      date: date,
-      currency: currency,
-    },
-  }).then((record) => {
-    if (!record) {
-      Currency.create({
-        date: date,
-        currency: currency,
-        data: data,
-      })
-        .then(() => {
-          console.log('Stored into database')
-          return true
-        })
-        .catch((error) => console.error(`Error inserting data: ${data}. Error was ${error}`))
+  return saveToDB(date, currency, data)
+}
+
+const saveToDB = async (date: string, currency: string, data: Json): Promise<boolean> => {
+  const record = await Currency.findOne({ where: { date: date, currency: currency } })
+
+  // Zaznam sa nenasiel ulozime do databazy
+  if (!record) {
+    try {
+      await Currency.create({ date: date, currency: currency, data: data })
+      console.log('Stored into database')
+    } catch (error) {
+      console.error(`Error inserting data: ${data}. Error was ${error}`)
+      return false
     }
-  })
+  }
   return false
 }
 
