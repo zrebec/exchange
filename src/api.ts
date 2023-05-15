@@ -42,7 +42,7 @@ sequelize.sync().then(() => {
 interface CacheItem {
   date: string
   currency: string
-  data: any
+  data: JSON
 }
 
 const getDataFromCache = async (date: string, currency: string): Promise<Object | null> => {
@@ -58,7 +58,10 @@ const getDataFromCache = async (date: string, currency: string): Promise<Object 
   try {
     const record = await Currency.findOne({ where: { date: date, currency: currency } })
     if (record) {
-      console.log(`We're returning from database because there is already exists in database`)
+      console.log(
+        `We're returning from database because there is already exists in database but looks that it's not in local cache`
+      )
+      cache.push({ date: date, currency: currency, data: record.dataValues.data })
       return record.dataValues.data
     }
   } catch (error) {
