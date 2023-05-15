@@ -43,14 +43,7 @@ app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
   }
 
   // Najskor sa pozrieme do lokalnej cache ci mame pre takuto menu a datum uz historicku odpoved
-  const localData = getDataFromCache(date, currency)
-  // Ak mame historicku hodnotu pre konkretny datum a menu, teda localData nie je false
-  // vratime to z navratovej hodnotz funkcie getDataFromLocalCache pretoze uz nebude null
-  // return pouzivam preto, aby som co najskor vratil odpoved a nepokracoval dalej
-  // Dalo by sa to aj tak, ze budeme vnarat do seba if a else bloky ale tento sposob mne
-  // pride citatelnejsi. Proste vyradit vsetky negativne podmienky ako overovat pozitivnu
-  // podmienku a do else potom davat nejake vynimky, pretoze velmi rychlo sa vieme stratit
-  // vo vnorenych podmienkach
+  let localData = await getDataFromCache(date, currency)
   if (!_.isNil(localData)) return res.json(localData)
 
   // Splitting the date
@@ -60,7 +53,7 @@ app.get('/api/rates/:currency/:date', async (req: Request, res: Response) => {
     const response = await axios.get(`https://v6.exchangerate-api.com/v6/${apiKey}/history/${currency}/${year}/${month}/${day}`)
     // Ak sa vsetko podari a mame response.data, ziskane json ulozime do local cache
     await setDataToCache(date, currency, response.data)
-    res.json(response.data)
+    localData = res.json(response.data)
   } catch (error) {
     if (_.isNil(error.request))
       // Nemame odpoved zo serveru
