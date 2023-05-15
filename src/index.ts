@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express'
 import axios from 'axios'
 import dotenv from 'dotenv'
 import { getDataFromCache, setDataToCache } from './api'
-const _ = require('lodash')
+import _ from 'lodash'
 
 // TODO Implementovat sqlite3
 // TODO Ak uzivatel zada datumz buducnosti, upozornit ho na to
