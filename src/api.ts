@@ -2,7 +2,7 @@ import { Sequelize, Model, DataTypes } from 'sequelize'
 import { Json } from 'sequelize/types/utils'
 
 // Vytvorime si lokalnu cache a sql db
-const cache: CacheItem[] = []
+const cache: Map<string, CacheItem> = new Map()
 const MAX_CACHE_SIZE = 1000
 const sequelize = new Sequelize({
   dialect: 'sqlite',
@@ -46,12 +46,12 @@ interface CacheItem {
 }
 
 const getDataFromCache = async (date: string, currency: string): Promise<Object | null> => {
+  const key = `${date}-${currency}`
   // Overime ci mame pre tento datum a pre tuto menu uz nieco v lokalnej cache
-  const cacheItem = cache.find((item) => item.date === date && item.currency === currency)
-  if (cacheItem) {
+  if (cache.has(key)) {
     // Nasli sme prislusny datum aj prislusnu currency a tak mozeme odovzdat parameter z lokalnej cache
     console.log(`We're returning from local cache there is already exists`)
-    return cacheItem.data
+    return cache.get(key).data
   }
 
   // Nasledne overime ci existuje zaznam v sqlite3
@@ -61,7 +61,7 @@ const getDataFromCache = async (date: string, currency: string): Promise<Object 
       console.log(
         `We're returning from database because there is already exists in database but looks that it's not in local cache`
       )
-      cache.push({ date: date, currency: currency, data: record.dataValues.data })
+      cache.set(key, { date: date, currency: currency, data: record.dataValues.data })
       return record.dataValues.data
     }
   } catch (error) {
@@ -71,17 +71,17 @@ const getDataFromCache = async (date: string, currency: string): Promise<Object 
 }
 
 const setDataToCache = async (date: string, currency: string, data: any): Promise<boolean> => {
-  const existingItemIndex = cache.findIndex((item) => item.date === date && item.currency === currency)
+  const key = `${date}-${currency}`
   // index neexistuje, takze sa jedna o novy zaznam
-  if (existingItemIndex === -1) {
+  if (!cache.has(key)) {
     // odstranime najstarsi zazsnam v local cache
-    if (cache.length === MAX_CACHE_SIZE) {
+    if (cache.size === MAX_CACHE_SIZE) {
       console.log('Remove oldest from local cache')
-      cache.shift()
+      cache.delete(cache.keys().next().value)
     }
     // ulozime data do lokalneho cache
     console.log('Stored into local cache')
-    cache.push({ date, currency, data })
+    cache.set(key, { date, currency, data })
     // Zaroven ho zapiseme do databazy sqlite3 ak este v databaze neexistuje
     return saveToDB(date, currency, data)
   }
