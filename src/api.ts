@@ -42,7 +42,7 @@ sequelize.sync().then(() => {
 interface CacheItem {
   date: string
   currency: string
-  data: JSON
+  data: Json
 }
 
 const getDataFromCache = async (date: string, currency: string): Promise<Object | null> => {
@@ -70,7 +70,7 @@ const getDataFromCache = async (date: string, currency: string): Promise<Object 
   return null
 }
 
-const setDataToCache = async (date: string, currency: string, data: any): Promise<boolean> => {
+const setDataToCache = async (date: string, currency: string, data: Json): Promise<boolean> => {
   const key = `${date}-${currency}`
   // index neexistuje, takze sa jedna o novy zaznam
   if (!cache.has(key)) {
