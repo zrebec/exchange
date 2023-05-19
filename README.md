@@ -73,9 +73,10 @@ The API has error handling for various scenarios, including:
 
 ## TODO
 
-[x] Saving to DB separately in setDataToCache
-[ ] Saving to local cache for setDataToCache and also for getDataFromCache (becuase sometimes happened that we have record in DB (older after restart server)) but not saved into local cache. This is fixed by added line in function setDataToCache but it wants one common function for setting data to
-local cache
+[x] Saving to DB separately in setDataToCache  
+[x] Saving to local cache for setDataToCache and also for getDataFromCache (becuase sometimes happened that we have record in DB (older after restart server)) but not saved into local cache. This is fixed by added line in function setDataToCache but it wants one common function for setting data to
+local cache  
+[ ] Write some Jest tests
 
 ## Contribution
 
